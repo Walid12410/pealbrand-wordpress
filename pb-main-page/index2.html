@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pearl Brands — Category strip + SVG Cursor (mobile full-bleed)</title>
+<style>
+  :root{
+    --topbar-h: 56px;
+    --panel-w:  450px;
+    --search-y: calc(var(--topbar-h) + 10px);
+    --search-h: 52px; 
+    --cats-top: calc(var(--search-y) + var(--search-h) + 100px);
+    --cats-h:   64px;
+
+    --black:#0E0E0F; --white:#fff; --muted:#CFCFCF;
+    --t1:240ms cubic-bezier(.22,.61,.36,1);
+    --t2:180ms cubic-bezier(.22,.61,.36,1);
+
+    --cursor-size: 32px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:#0b0b0b; color:#fff;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    overflow-x:hidden;
+    cursor:none;
+  }
+
+  /* === DESKTOP ==================================================== */
+  .hero{ position:fixed; inset:0; left:var(--panel-w); z-index:0; overflow:hidden; }
+  .hero img{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; object-position:center;
+    opacity:0; transition:opacity var(--t1);
+  }
+  .hero img.is-active{opacity:1}
+
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:var(--topbar-h); z-index:50;
+    background:linear-gradient(180deg, rgba(0,0,0,.75), rgba(0,0,0,0));
+    pointer-events:none;
+  }
+
+  .brand-rail{
+    position:fixed; z-index:65;
+    top:var(--search-y); left:0; width:var(--panel-w); height:var(--search-h);
+    display:flex; align-items:center; justify-content:flex-start; gap:12px;
+    padding:0 18px; pointer-events:none;
+  }
+  .brand{ letter-spacing:.25em; font-weight:800; font-size:18px; white-space:nowrap; pointer-events:auto; color:#fff !important;}
+  .brand-actions{ display:none; margin-left:auto; gap:12px; pointer-events:auto }
+  .brand-actions button{ background:none; border:none; padding:4px; cursor:pointer; color:#fff }
+  .icon{width:18px; height:18px; fill:currentColor; color:#fff}
+
+  .search-rail{
+    position:fixed; z-index:55;
+    top:var(--search-y); left:var(--panel-w); right:0;
+    min-height:44px; display:flex; align-items:center; gap:12px;
+    padding:10px 14px 10px 12px;
+    background:rgba(24,24,24,.68);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:0; backdrop-filter: blur(6px);
+    cursor:auto;
+  }
+  .sr-icon{ background:none; border:none; display:inline-flex; align-items:center; justify-content:center; color:#fff; cursor:pointer }
+  .sr-input{ flex:1; height:32px; background:transparent; border:none; outline:none; color:#fff; font-size:15px; cursor:text }
+  .sr-right{ display:flex; align-items:center; gap:14px }
+  .sr-btn{ background:none; border:1px solid rgba(255,255,255,.16); border-radius:10px; padding:6px 8px; color:#fff; cursor:pointer }
+  .sr-link{ color:#fff; text-decoration:none; font-size:15px; cursor:pointer }
+
+  .cats{
+    position:fixed; z-index:61;
+    top:var(--cats-top); left:0; right:0; height:var(--cats-h);
+    display:flex; align-items:center; gap:60px;
+    padding:0 16px;
+    overflow-x:auto; overflow-y:hidden;
+    background:transparent;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; -ms-overflow-style:none;
+    cursor:grab; user-select:none;
+  }
+  .cats.is-dragging{ cursor:grabbing }
+  .cats::-webkit-scrollbar{ display:none }
+
+  .cats__btn{
+    appearance:none; background:none; border:none; white-space:nowrap;
+    color:rgba(255,255,255,.92); font-size:60px; font-weight:700; letter-spacing:.35em;
+    padding:8px 20px; cursor:none;
+    transition:color var(--t2), transform var(--t2);
+  }
+  .cats__btn[aria-pressed="true"], .cats__btn:hover{ color:#fff; transform:translateY(-1px) }
+
+  .panel{
+    position:fixed; z-index:60; top:0; bottom:0; left:0; width:var(--panel-w);
+    background:var(--black); border-right:1px solid rgba(255,255,255,.06);
+    display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start; padding:0 16px;
+  }
+  .panel__body{
+    width:100%;
+    margin-top: calc(var(--cats-top) + var(--cats-h) + 100px);
+    max-height:calc(100vh - 32px);
+    overflow:auto;
+  }
+
+  .menu-list{ display:grid; gap:12px }
+  .menu-list.is-two{ grid-template-columns:1fr 1fr; column-gap:28px }
+  .menu-list a{
+    display:flex; align-items:center; color:#fff; text-decoration:none;
+    font-size:18px; padding:6px 0; background:transparent; transition:color var(--t2);
+    cursor:none;
+  }
+  .menu-list a:hover{ color:#ccc }
+
+  .menu-list.brand-layout{ grid-template-columns:1fr 1fr; column-gap:80px; row-gap:22px }
+  .menu-list.brand-layout a{ font-size:24px; letter-spacing:.01em; padding:0 }
+
+  /* Logos as a vertical list (one per row) */
+  .menu-list.logo-list{ display:block; padding:8px 16px 24px }
+  .menu-list.logo-list a{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 0; border-bottom:1px solid rgba(255,255,255,.14);
+    color:#fff; text-decoration:none; opacity:.95;
+  }
+  .menu-list.logo-list a:last-child{ border-bottom:none }
+  .menu-list.logo-list img{
+    height:26px; width:auto; object-fit:contain;
+    filter:brightness(0) invert(1);
+  }
+
+  .menu-logos{ display:grid; grid-template-columns:1fr 1fr; gap:20px } /* kept for desktop grid use if needed */
+  .menu-logos a{ cursor:none }
+  .menu-logos img{ max-width:120px; max-height:50px; object-fit:contain; filter:brightness(0) invert(1) }
+
+  /* Social (desktop default) */
+  .social{
+    position:fixed; right:20px; bottom:20px;
+    display:flex; align-items:center; gap:14px; z-index:100;
+    margin:0;
+  }
+  .social a{ color:#fff; text-decoration:none; display:inline-flex; cursor:pointer }
+  .social svg{ width:20px; height:20px; fill:#fff }
+  .social span{ font-size:14px; color:#fff; margin-left:6px; }
+
+  /* Cursor */
+  .cursor{
+    position:fixed; top:0; left:0;
+    width:calc(var(--cursor-size)*2); height:calc(var(--cursor-size)*2);
+    pointer-events:none; transform:translate(-50%,-50%) scale(.70);
+    transition:transform .18s ease-out, opacity .18s ease-out;
+    z-index:2000; filter: drop-shadow(0 0 1px rgba(0,0,0,.45));
+  }
+  .cursor-svg{ display:block; width:100%; height:100% }
+  .cursor.is-active{ transform:translate(-50%,-50%) scale(1.1) }
+
+  /* === MOBILE OVERRIDES ============================= */
+  @media (max-width:1023px){
+
+    body{ cursor:auto }
+
+    .hero{ left:0; }
+    /* 70% black shadow from the left */
+    .hero::before{
+      content:""; position:absolute; inset:0 auto 0 0; width:70vw;
+      background:rgba(0,0,0,.68); z-index:1; pointer-events:none;
+    }
+    /* subtle overall darken */
+    .hero::after{
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(0,0,0,.20) 0%, rgba(0,0,0,.35) 100%);
+      pointer-events:none; z-index:1;
+    }
+    .hero img{ filter:brightness(.95) }
+
+    .panel{ position:relative; width:100%; background:transparent; border:none; padding:0; z-index:2 }
+    .panel__body{ margin:0 0 120px; max-height:initial; overflow:visible; margin-top: 40px; }
+
+    /* Brand row -> left title + right icons */
+    .brand-rail{
+      position:relative; top:auto; left:auto; width:100%;
+      height:auto; padding:16px; z-index:3; pointer-events:auto;
+      display:flex; align-items:center;
+    }
+    .brand{ font-size:16px; letter-spacing:.20em }
+    .brand-actions{ display:flex }
+
+    /* Hide desktop search on mobile */
+    .search-rail{ display:none }
+
+    /* Mobile search — extra space below it */
+    .search-rail-mobile{
+      margin-top:40px;
+      display:flex; align-items:center; gap:10px;
+      padding:12px 16px; margin:8px 16px 22px;
+      background:rgba(24,24,24,.68); border:1px solid rgba(255,255,255,.14);
+      border-radius:12px; backdrop-filter:blur(6px); z-index:3;
+    }
+    .search-rail-mobile input{
+      flex:1; height:34px; background:transparent; border:none; outline:none; color:#fff; font-size:15px;
+    }
+    .search-rail-mobile button{
+      background:none; border:none; padding:6px; color:#fff; cursor:pointer;
+    }
+
+    /* Category strip — more gap above to separate from search */
+    .cats{
+      position:relative; top:auto; left:auto; right:auto; height:auto;
+      padding:8px 16px 0; gap:28px; z-index:3; margin-top:30px;
+    }
+    .cats__btn{ font-size:36px; letter-spacing:.25em; padding:4px 12px }
+
+    /* LISTS ON MOBILE: one per row (full width) */
+    .menu-list,
+    .menu-list.brand-layout{
+      display:block;
+      padding:8px 16px 24px;
+    }
+    .menu-list.is-two{ grid-template-columns:1fr; } /* safety */
+    .menu-list a {
+      display:block;
+      padding:14px 0;
+      font-size:17px;
+      opacity:.95;
+      border-bottom:1px solid rgba(255,255,255,.14);
+    }
+    .menu-list a:last-child{ border-bottom:none; }
+
+    /* Logo list tweaks on mobile */
+    .menu-list.logo-list{ padding:8px 16px 24px }
+    .menu-list.logo-list img{ height:22px }
+
+    /* Social on mobile: bottom-right, stacked label + small icons row */
+    .social{
+      right:12px; bottom:14px; z-index:4;
+      flex-direction:column; align-items:flex-end; gap:6px;
+    }
+    .social span{
+      order:0; font-size:12px; margin:0; opacity:.95;
+    }
+    .social .icons-row{ display:flex; gap:10px; }
+    .social svg{ width:16px; height:16px; }
+
+    .cursor{ display:none }
+  }
+
+  @media (max-width:640px){
+    .search-rail-mobile input{ font-size:14px }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Background hero -->
+  <div class="hero" id="hero"></div>
+
+  <div class="topbar"></div>
+
+  <!-- Brand + (mobile) icons -->
+  <div class="brand-rail">
+    <div class="brand">PEARL BRANDS</div>
+    <div class="brand-actions">
+      <button aria-label="Account">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14Z" fill="currentColor"/></svg>
+      </button>
+      <button aria-label="Cart">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M7 4h-2l-1 2v2h2l3 7h8l3-7h2V6H7Zm3 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 .001 4A2 2 0 0 0 18 18Z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Desktop search (hidden on mobile by CSS) -->
+  <div class="search-rail" role="search">
+    <button class="sr-icon" aria-label="Open search">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"
+              stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <input class="sr-input" type="search" placeholder="Express Delivery Available in Beirut"/>
+    <div class="sr-right">
+      <button class="sr-btn" aria-label="Account">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14Z"/></svg>
+      </button>
+      <a class="sr-link" href="/careers">Careers</a>
+    </div>
+  </div>
+
+  <!-- Mobile-only search -->
+  <div class="search-rail-mobile" role="search">
+    <button aria-label="Search">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </button>
+    <input type="search" placeholder="Search"/>
+  </div>
+
+  <!-- Category strip -->
+  <nav class="cats" id="cats" aria-label="Primary"></nav>
+
+  <!-- Content container -->
+  <aside class="panel" aria-label="Sidebar">
+    <div class="panel__body" id="panel-body"></div>
+  </aside>
+
+  <!-- Social -->
+  <div class="social">
+    <span>Follow Us</span>
+    <div class="icons-row">
+      <a href="#" aria-label="Facebook">
+        <svg width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.45119 5.71246V8.91731H1V12.8735H4.45119V21.7876H8.53554V12.8735H12.0159L12.4324 8.91943H8.53554V5.71246C8.53554 5.14577 8.97501 4.86349 9.16038 4.68945C9.48738 4.40505 11.0661 4.36048 11.0661 4.36048H12.6137V0.775718C11.8079 0.653055 10.9954 0.582168 10.181 0.563477C4.33247 0.563477 4.45119 5.71246 4.45119 5.71246Z" stroke="white" stroke-miterlimit="10"/></svg>
+      </a>
+      <a href="#" aria-label="Instagram">
+        <svg width="21" height="22" viewBox="0 0 21 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.6811 5.55371C7.83915 5.55371 5.48438 7.94413 5.48438 10.9217C5.48438 13.8992 7.79855 16.2896 10.6811 16.2896C13.5637 16.2896 15.8779 13.8573 15.8779 10.9217C15.8779 7.98607 13.5231 5.55371 10.6811 5.55371ZM10.6811 14.3605C8.85415 14.3605 7.35196 12.8088 7.35196 10.9217C7.35196 9.0345 8.85415 7.48282 10.6811 7.48282C12.5081 7.48282 14.0103 9.0345 14.0103 10.9217C14.0103 12.8088 12.5081 14.3605 10.6811 14.3605Z" fill="white"/><path d="M16.0817 6.64476C16.7319 6.64476 17.2591 6.10026 17.2591 5.42858C17.2591 4.7569 16.7319 4.2124 16.0817 4.2124C15.4314 4.2124 14.9043 4.7569 14.9043 5.42858C14.9043 6.10026 15.4314 6.64476 16.0817 6.64476Z" fill="white"/></svg>
+      </a>
+      <a href="#" aria-label="Tiktok">
+        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.91223 21.9246C5.52808 21.9246 4.22266 21.4286 3.1371 20.4898C2.93433 20.3146 2.73935 20.1231 2.55737 19.9212C1.2902 18.5144 0.652536 16.6407 0.762094 14.6451C0.844913 13.1369 1.38565 11.683 2.28552 10.5511C3.47729 9.05203 5.1203 8.22637 6.91261 8.22637C7.22048 8.22637 7.53133 8.25224 7.83736 8.30314L8.31273 8.38241V13.1215L7.58073 12.8499C7.36755 12.7706 7.14584 12.7306 6.92152 12.7306C6.35479 12.7306 5.82408 12.9801 5.42706 13.4327C5.03191 13.8833 4.81911 14.4791 4.82728 15.1112C4.83805 15.926 5.2202 16.6644 5.84933 17.0875C6.13901 17.2819 6.4688 17.3958 6.80379 17.4167C7.06822 17.4329 7.3293 17.3941 7.58036 17.3011C8.43863 16.9828 9.01539 16.0883 9.01539 15.0757L9.0191 10.161V0.563477H13.0509L13.0557 1.18345C13.0579 1.46423 13.0835 1.74502 13.1318 2.01704C13.3212 3.08676 13.8553 4.04009 14.6356 4.70095C15.3282 5.28796 16.1549 5.59795 17.0254 5.59795C17.2319 5.61255 17.75 5.65344 17.75 5.65344V9.49177..." fill="white"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Cursor -->
+  <div class="cursor" id="cursor">
+    <svg class="cursor-svg" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" stroke="#ffffff" stroke-width="6" fill="none"/>
+      <path d="M62 12 A38 38 0 0 1 88 38" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <circle cx="31" cy="18" r="5" fill="#ffffff"/>
+    </svg>
+  </div>
+
+<script>
+/* ===== DATA =====
+   Add bg_m for mobile-specific background images (optional).
+   If bg_m is missing, it falls back to bg. */
+const MENU = [
+  { key:"newin", title:"NEW IN",
+    bg:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-11.11.29-AM-1.png",
+    bg_m:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-11.11.29-AM-1.pngx",
+    items:[ {label:"Women", href:"#"}, {label:"Kids", href:"#"}, {label:"Men", href:"#"} ] },
+  { key:"luxury", title:"LUXURY",
+    bg:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1.png",
+    bg_m:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1.png",
+    items:[
+      {img:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/image-142.png", label:"Brand A"},
+      {img:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/image-143.png", label:"Brand B"},
+      {img:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/image-144.png", label:"Brand C"},
+      {img:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/image-145.png", label:"Brand D"},
+      {img:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/image-147.png", label:"Brand E"},
+      {img:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/image-148.png", label:"Brand F"},
+    ] },
+  { key:"brands", title:"BRANDS",
+    bg:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1-1.png",
+    bg_m:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1-1.png",
+    items:[
+      {label:"Adolfo Dominguez"}, {label:"Culti"}, {label:"Etam"}, {label:"Michael Kors"},
+      {label:"Saint Barth"}, {label:"The Giving Movement"}, {label:"Zahar"},
+      {label:"Secret Senses"}, {label:"Jott"}, {label:"Guess"}, {label:"Undiz"}, {label:"Mayoral"}
+    ] },
+  { key:"beauty", title:"BEAUTY",
+    bg:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1-2.png",
+    bg_m:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1-2.png",
+    items:[ {label:"Faces"}, {label:"L'occitane"}, {label:"Esla"}, {label:"Yves Rocher"} ] },
+  { key:"jewelry", title:"JEWELRY",
+    bg:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1-3.png",
+    bg_m:"https://pearlbrandsonline.com/wp-content/uploads/2025/08/Screenshot-2025-08-12-at-12.13.32-PM-1-3.png",
+    items:[ {label:"Necklaces"}, {label:"Rings"}, {label:"Bracelets"}, {label:"Earrings"} ] }
+];
+
+/* ===== HERO (mobile bg support) ===== */
+const hero = document.getElementById('hero');
+const isMobile = () => window.matchMedia('(max-width:1023px)').matches;
+const pickBg = (cat) => (isMobile() && cat.bg_m) ? cat.bg_m : cat.bg;
+
+MENU.forEach((cat,i)=>{
+  const img=document.createElement('img');
+  img.src = pickBg(cat);
+  img.alt=""; img.loading='lazy'; img.decoding='async';
+  img.className=i===0?'is-active':'';
+  img.dataset.key=cat.key;
+  hero.appendChild(img);
+});
+function refreshHeroSources(){
+  [...hero.children].forEach(img=>{
+    const cat = MENU.find(c=>c.key===img.dataset.key);
+    if(cat) img.src = pickBg(cat);
+  });
+}
+function setHero(key){ [...hero.children].forEach(img=>img.classList.toggle('is-active', img.dataset.key===key)); }
+window.addEventListener('resize', refreshHeroSources);
+window.addEventListener('orientationchange', refreshHeroSources);
+
+/* ===== CATEGORIES ===== */
+const cats = document.getElementById('cats');
+MENU.forEach(cat=>{
+  const b=document.createElement('button');
+  b.className='cats__btn'; b.type='button'; b.textContent=cat.title; b.dataset.key=cat.key;
+  b.setAttribute('aria-pressed','false');
+  b.addEventListener('click',()=>activateCategory(cat.key));
+  cats.appendChild(b);
+});
+
+/* wheel & drag scroll */
+cats.addEventListener('wheel', (e)=>{
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    cats.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }
+}, {passive:false});
+let isDown=false, startX=0, startScroll=0;
+cats.addEventListener('mousedown', (e)=>{ isDown=true; cats.classList.add('is-dragging'); startX=e.pageX; startScroll=cats.scrollLeft; });
+['mouseleave','mouseup'].forEach(ev=>cats.addEventListener(ev,()=>{ isDown=false; cats.classList.remove('is-dragging'); }));
+cats.addEventListener('mousemove',(e)=>{ if(!isDown) return; e.preventDefault(); cats.scrollLeft = startScroll - (e.pageX - startX); });
+
+/* ===== PANEL RENDER (logo rows if 'img' items) ===== */
+const panelBody=document.getElementById('panel-body');
+
+function renderPanel(cat){
+  panelBody.innerHTML='';
+
+  const isLogoCategory = cat.items && cat.items.length && cat.items.every(it => 'img' in it);
+
+  if(isLogoCategory){
+    const wrap=document.createElement('div'); wrap.className='menu-list logo-list';
+    cat.items.forEach(it=>{
+      const a=document.createElement('a'); a.href=it.href||'#';
+      a.innerHTML=`<img src="${it.img}" alt="${it.alt||it.label||''}"><span>${it.label||''}</span>`;
+      wrap.appendChild(a);
+    });
+    panelBody.appendChild(wrap);
+  } else {
+    const wrap=document.createElement('div');
+    if(cat.key==="brands"){ wrap.className='menu-list brand-layout'; }
+    else { wrap.className='menu-list'; if(cat.items.length>10) wrap.classList.add('is-two'); }
+
+    cat.items.forEach(it=>{
+      const a=document.createElement('a'); a.href=it.href||'#';
+      a.innerHTML=`<span>${it.label}</span>`;
+      wrap.appendChild(a);
+    });
+    panelBody.appendChild(wrap);
+  }
+
+  updateCursorTargets();
+}
+
+/* ===== ACTIVATE ===== */
+let currentKey=null;
+function activateCategory(key){
+  if(currentKey===key) return;
+  const cat = MENU.find(c=>c.key===key); if(!cat) return;
+  currentKey=key;
+  [...cats.children].forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.key===key)));
+  renderPanel(cat);
+  setHero(key);
+}
+
+/* default */
+window.addEventListener('DOMContentLoaded', ()=>activateCategory(MENU[0].key));
+
+/* ===== Custom Cursor (desktop only) ===== */
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top  = e.clientY + 'px';
+});
+function updateCursorTargets(){
+  const targets = document.querySelectorAll(`
+    a, button, input, textarea, select,
+    [role="button"],
+    .brand, .cats__btn, .menu-list a, .menu-logos a,
+    .sr-link, .sr-icon, .sr-btn,
+    .social a, svg, .icon
+  `);
+  targets.forEach(el=>{
+    el.addEventListener('mouseenter', ()=> cursor.classList.add('is-active'));
+    el.addEventListener('mouseleave', ()=> cursor.classList.remove('is-active'));
+    el.addEventListener('focus',     ()=> cursor.classList.add('is-active'));
+    el.addEventListener('blur',      ()=> cursor.classList.remove('is-active'));
+  });
+}
+updateCursorTargets();
+</script>
+</body>
+</html>

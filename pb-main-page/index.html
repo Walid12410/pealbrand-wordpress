@@ -44,7 +44,6 @@
     pointer-events:none;
   }
 
-  /* brand row (desktop shows name only; mobile adds icons via media query) */
   .brand-rail{
     position:fixed; z-index:65;
     top:var(--search-y); left:0; width:var(--panel-w); height:var(--search-h);
@@ -56,7 +55,6 @@
   .brand-actions button{ background:none; border:none; padding:4px; cursor:pointer; color:#fff }
   .icon{width:18px; height:18px; fill:currentColor; color:#fff}
 
-  /* desktop search */
   .search-rail{
     position:fixed; z-index:55;
     top:var(--search-y); left:var(--panel-w); right:0;
@@ -123,7 +121,7 @@
   .menu-logos a{ cursor:none }
   .menu-logos img{ max-width:120px; max-height:50px; object-fit:contain; filter:brightness(0) invert(1) }
 
-  /* Social: fixed bottom-right */
+  /* Social (desktop default) */
   .social{
     position:fixed; right:20px; bottom:20px;
     display:flex; align-items:center; gap:14px; z-index:100;
@@ -144,23 +142,29 @@
   .cursor-svg{ display:block; width:100%; height:100% }
   .cursor.is-active{ transform:translate(-50%,-50%) scale(1.1) }
 
-  /* === MOBILE (match design) ====================================== */
+  /* === MOBILE OVERRIDES (per request) ============================= */
   @media (max-width:1023px){
 
     body{ cursor:auto }
 
-    .hero{ left:0 }
+    .hero{ left:0; }
+    /* 70% black shadow from the left */
+    .hero::before{
+      content:""; position:absolute; inset:0 auto 0 0; width:70vw;
+      background:rgba(0,0,0,.68); z-index:1; pointer-events:none;
+    }
+    /* slight global darkening as in mock */
     .hero::after{
       content:""; position:absolute; inset:0;
-      background:linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.55) 24%, rgba(0,0,0,.55) 48%, rgba(0,0,0,.65) 100%);
+      background:linear-gradient(180deg, rgba(0,0,0,.20) 0%, rgba(0,0,0,.35) 100%);
       pointer-events:none; z-index:1;
     }
-    .hero img{ filter:brightness(.9) }
+    .hero img{ filter:brightness(.95) }
 
     .panel{ position:relative; width:100%; background:transparent; border:none; padding:0; z-index:2 }
-    .panel__body{ margin:0 0 120px; max-height:initial; overflow:visible }
+    .panel__body{ margin:0 0 120px; max-height:initial; overflow:visible; margin-top: 40px; }
 
-    /* brand row becomes left title + right icons */
+    /* Brand row -> left title + right icons */
     .brand-rail{
       position:relative; top:auto; left:auto; width:100%;
       height:auto; padding:16px; z-index:3; pointer-events:auto;
@@ -169,14 +173,16 @@
     .brand{ font-size:16px; letter-spacing:.20em }
     .brand-actions{ display:flex }
 
-    /* HIDE desktop search on mobile */
+    /* Hide desktop search on mobile */
     .search-rail{ display:none }
 
-    /* NEW mobile search (visible only here) */
+    /* Mobile search — extra space below it */
     .search-rail-mobile{
-      display:flex; align-items:center; gap:10px; padding:10px 16px; margin:2px 16px 10px;
-      background:rgba(24,24,24,.68); border:1px solid rgba(255,255,255,.14); border-radius:12px; backdrop-filter:blur(6px);
-      z-index:3;
+      margin-top: 40px ;
+      display:flex; align-items:center; gap:10px;
+      padding:12px 16px; margin:8px 16px 22px; /* larger bottom margin for the space you asked */
+      background:rgba(24,24,24,.68); border:1px solid rgba(255,255,255,.14);
+      border-radius:12px; backdrop-filter:blur(6px); z-index:3;
     }
     .search-rail-mobile input{
       flex:1; height:34px; background:transparent; border:none; outline:none; color:#fff; font-size:15px;
@@ -185,20 +191,43 @@
       background:none; border:none; padding:6px; color:#fff; cursor:pointer;
     }
 
-    /* category strip pushed down a bit */
+    /* Category strip — more gap above to separate from search */
     .cats{
       position:relative; top:auto; left:auto; right:auto; height:auto;
-      padding:8px 16px 0; gap:28px; z-index:3; margin-top:6px;
-    }
+        padding:8px 16px 0; gap:28px; z-index:3; margin-top:190px;
+      }
     .cats__btn{ font-size:36px; letter-spacing:.25em; padding:4px 12px }
 
-    /* lists on image */
-    .menu-list{ padding:8px 16px 24px }
-    .menu-list a{ font-size:16px; opacity:.92 }
-    .menu-list.brand-layout a{ font-size:20px }
+    /* LISTS ON MOBILE: one per row (full width) */
+    .menu-list,
+    .menu-list.brand-layout{
+      display:block;
+      padding:8px 16px 24px;
+    }
+    .menu-list.is-two{ grid-template-columns:1fr; } /* safety */
+    .menu-list a {
+      display:block;
+      padding: 14px 0;
+      font-size: 17px;
+      opacity:.95;
+      border-bottom:1px solid rgba(255,255,255,.14);
+    }
+    .menu-list a:last-child{ border-bottom:none; }
 
-    .menu-logos{ padding:8px 16px 24px }
+    /* Logos area keeps grid but with padding */
+    .menu-logos{ padding:8px 16px 24px; }
     .menu-logos img{ filter:brightness(0) invert(1) }
+
+    /* Social on mobile: bottom-right, stacked label + small icons row */
+    .social{
+      right:12px; bottom:14px; z-index:4;
+      flex-direction:column; align-items:flex-end; gap:6px;
+    }
+    .social span{
+      order:0; font-size:12px; margin:0; opacity:.95;
+    }
+    .social .icons-row{ display:flex; gap:10px; }
+    .social svg{ width:16px; height:16px; }
 
     .cursor{ display:none }
   }
@@ -263,11 +292,18 @@
 
   <!-- Social -->
   <div class="social">
-    <!-- (icons unchanged) -->
-    <a href="#"><svg width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.45119 5.71246V8.91731H1V12.8735H4.45119V21.7876H8.53554V12.8735H12.0159L12.4324 8.91943H8.53554V5.71246C8.53554 5.14577 8.97501 4.86349 9.16038 4.68945C9.48738 4.40505 11.0661 4.36048 11.0661 4.36048H12.6137V0.775718C11.8079 0.653055 10.9954 0.582168 10.181 0.563477C4.33247 0.563477 4.45119 5.71246 4.45119 5.71246Z" stroke="white" stroke-miterlimit="10"/></svg></a>
-    <a href="#"><svg width="21" height="22" viewBox="0 0 21 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.6811 5.55371C7.83915 5.55371 5.48438 7.94413 5.48438 10.9217C5.48438 13.8992 7.79855 16.2896 10.6811 16.2896C13.5637 16.2896 15.8779 13.8573 15.8779 10.9217C15.8779 7.98607 13.5231 5.55371 10.6811 5.55371ZM10.6811 14.3605C8.85415 14.3605 7.35196 12.8088 7.35196 10.9217C7.35196 9.0345 8.85415 7.48282 10.6811 7.48282C12.5081 7.48282 14.0103 9.0345 14.0103 10.9217C14.0103 12.8088 12.5081 14.3605 10.6811 14.3605Z" fill="white"/><path d="M16.0817 6.64476C16.7319 6.64476 17.2591 6.10026 17.2591 5.42858C17.2591 4.7569 16.7319 4.2124 16.0817 4.2124C15.4314 4.2124 14.9043 4.7569 14.9043 5.42858C14.9043 6.10026 15.4314 6.64476 16.0817 6.64476Z" fill="white"/></svg></a>
-    <a href="#"><svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.91223 21.9246C5.52808 21.9246 4.22266 21.4286 3.1371 20.4898C2.93433 20.3146 2.73935 20.1231 2.55737 19.9212C1.2902 18.5144 0.652536 16.6407 0.762094 14.6451C0.844913 13.1369 1.38565 11.683 2.28552 10.5511C3.47729 9.05203 5.1203 8.22637 6.91261 8.22637C7.22048 8.22637 7.53133 8.25224 7.83736 8.30314L8.31273 8.38241V13.1215L7.58073 12.8499C7.36755 12.7706 7.14584 12.7306 6.92152 12.7306C6.35479 12.7306 5.82408 12.9801 5.42706 13.4327C5.03191 13.8833 4.81911 14.4791 4.82728 15.1112C4.83805 15.926 5.2202 16.6644 5.84933 17.0875C6.13901 17.2819 6.4688 17.3958 6.80379 17.4167C7.06822 17.4329 7.3293 17.3941 7.58036 17.3011C8.43863 16.9828 9.01539 16.0883 9.01539 15.0757L9.0191 10.161V0.563477H13.0509L13.0557 1.18345C13.0579 1.46423 13.0835 1.74502 13.1318 2.01704C13.3212 3.08676 13.8553 4.04009 14.6356 4.70095C15.3282 5.28796 16.1549 5.59795 17.0254 5.59795C17.0459 5.59795 17.0459 5.59795 17.2319 5.61255L17.75 5.65344V9.49177..." fill="white"/></svg></a>
     <span>Follow Us</span>
+    <div class="icons-row">
+      <a href="#" aria-label="Facebook">
+        <svg width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.45119 5.71246V8.91731H1V12.8735H4.45119V21.7876H8.53554V12.8735H12.0159L12.4324 8.91943H8.53554V5.71246C8.53554 5.14577 8.97501 4.86349 9.16038 4.68945C9.48738 4.40505 11.0661 4.36048 11.0661 4.36048H12.6137V0.775718C11.8079 0.653055 10.9954 0.582168 10.181 0.563477C4.33247 0.563477 4.45119 5.71246 4.45119 5.71246Z" stroke="white" stroke-miterlimit="10"/></svg>
+      </a>
+      <a href="#" aria-label="Instagram">
+        <svg width="21" height="22" viewBox="0 0 21 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.6811 5.55371C7.83915 5.55371 5.48438 7.94413 5.48438 10.9217C5.48438 13.8992 7.79855 16.2896 10.6811 16.2896C13.5637 16.2896 15.8779 13.8573 15.8779 10.9217C15.8779 7.98607 13.5231 5.55371 10.6811 5.55371ZM10.6811 14.3605C8.85415 14.3605 7.35196 12.8088 7.35196 10.9217C7.35196 9.0345 8.85415 7.48282 10.6811 7.48282C12.5081 7.48282 14.0103 9.0345 14.0103 10.9217C14.0103 12.8088 12.5081 14.3605 10.6811 14.3605Z" fill="white"/><path d="M16.0817 6.64476C16.7319 6.64476 17.2591 6.10026 17.2591 5.42858C17.2591 4.7569 16.7319 4.2124 16.0817 4.2124C15.4314 4.2124 14.9043 4.7569 14.9043 5.42858C14.9043 6.10026 15.4314 6.64476 16.0817 6.64476Z" fill="white"/></svg>
+      </a>
+      <a href="#" aria-label="Tiktok">
+        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.91223 21.9246C5.52808 21.9246 4.22266 21.4286 3.1371 20.4898C2.93433 20.3146 2.73935 20.1231 2.55737 19.9212C1.2902 18.5144 0.652536 16.6407 0.762094 14.6451C0.844913 13.1369 1.38565 11.683 2.28552 10.5511C3.47729 9.05203 5.1203 8.22637 6.91261 8.22637C7.22048 8.22637 7.53133 8.25224 7.83736 8.30314L8.31273 8.38241V13.1215L7.58073 12.8499C7.36755 12.7706 7.14584 12.7306 6.92152 12.7306C6.35479 12.7306 5.82408 12.9801 5.42706 13.4327C5.03191 13.8833 4.81911 14.4791 4.82728 15.1112C4.83805 15.926 5.2202 16.6644 5.84933 17.0875C6.13901 17.2819 6.4688 17.3958 6.80379 17.4167C7.06822 17.4329 7.3293 17.3941 7.58036 17.3011C8.43863 16.9828 9.01539 16.0883 9.01539 15.0757L9.0191 10.161V0.563477H13.0509L13.0557 1.18345C13.0579 1.46423 13.0835 1.74502 13.1318 2.01704C13.3212 3.08676 13.8553 4.04009 14.6356 4.70095C15.3282 5.28796 16.1549 5.59795 17.0254 5.59795C17.2319 5.61255 17.75 5.65344 17.75 5.65344V9.49177..." fill="white"/></svg>
+      </a>
+    </div>
   </div>
 
   <!-- Cursor -->
@@ -358,6 +394,7 @@ function renderPanel(cat){
     panelBody.appendChild(wrap);
   } else {
     const wrap=document.createElement('div');
+    /* NOTE: mobile CSS forces one-per-row; desktop keeps original grids */
     if(cat.key==="brands"){ wrap.className='menu-list brand-layout'; }
     else { wrap.className='menu-list'; if(cat.items.length>10) wrap.classList.add('is-two'); }
 
